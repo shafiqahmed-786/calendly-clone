@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  timezone  String   @default("Asia/Kolkata")
+
+  eventTypes EventType[]
+  schedules  AvailabilitySchedule[]
+}
+
+model EventType {
+  id            String   @id @default(uuid())
+  userId        String
+  name          String
+  slug          String   @unique
+  duration      Int
+  bufferBefore  Int      @default(15)
+  bufferAfter   Int      @default(15)
+
+  user      User     @relation(fields: [userId], references: [id])
+  bookings  Booking[]
+  questions CustomQuestion[]
+}
+
+model AvailabilitySchedule {
+  id        String   @id @default(uuid())
+  userId    String
+  name      String
+  isActive  Boolean  @default(false)
+
+  user          User          @relation(fields: [userId], references: [id])
+  availabilities Availability[]
+}
+
+model Availability {
+  id         String @id @default(uuid())
+  scheduleId String
+  dayOfWeek  Int
+  startTime  String
+  endTime    String
+
+  schedule AvailabilitySchedule @relation(fields: [scheduleId], references: [id])
+}
+
+model DateOverride {
+  id             String   @id @default(uuid())
+  date           DateTime
+  startTime      String?
+  endTime        String?
+  isUnavailable  Boolean  @default(false)
+}
+
+model Booking {
+  id               String   @id @default(uuid())
+  eventTypeId      String
+  inviteeName      String
+  inviteeEmail     String
+  date             DateTime
+  startTime        String
+  endTime          String
+  status           String   @default("CONFIRMED")
+  rescheduleToken  String   @unique
+
+  eventType EventType @relation(fields: [eventTypeId], references: [id])
+}
+
+model CustomQuestion {
+  id          String @id @default(uuid())
+  eventTypeId String
+  label       String
+  isRequired  Boolean @default(false)
+
+  eventType EventType @relation(fields: [eventTypeId], references: [id])
+}
+
+
